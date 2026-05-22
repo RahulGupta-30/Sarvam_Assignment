@@ -8,8 +8,9 @@ The agent searches the live web, fetches source pages, builds a bounded research
 
 ## Demo
 
-Video Demo: Add your video link here  
+Video Demo: 
 Repository: https://github.com/RahulGupta-30/Sarvam_Assignment
+APP LINK : https://rahulgupta-30-sarvam-assignment-app-ykcjoe.streamlit.app/
 
 ---
 
@@ -216,7 +217,7 @@ Answer + Research Trace
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
+git clone <https://github.com/RahulGupta-30/Sarvam_Assignment>
 cd Sarvam_Assignment
 ```
 
@@ -332,16 +333,16 @@ The evaluator separates objective checks from judgment-based quality review.
 
 ### Deterministic Checks
 
-1. **Citation URL validity**  
+1. Citation URL validity
    Checks whether every cited URL exists in the fetched or used source set.
 
-2. **Search success**  
+2. Search success
    Checks whether search results were retrieved.
 
-3. **Fetch success**  
+3. Fetch success
    Checks whether page content was fetched.
 
-4. **Follow-up rewrite check**  
+4. Follow-up rewrite check  
    For follow-up turns, checks whether the standalone question changed.
 
 ### Groq-Based LLM Judge
@@ -378,11 +379,6 @@ It reports:
 - hallucination risk,
 - explanations for claims needing review.
 
-### No Aggregate Score
-
-The evaluator intentionally avoids one overall score. A scorecard is more useful because it reveals whether the problem is citation integrity, grounding, completeness, uncertainty, conflict handling, or follow-up resolution.
-
----
 
 ## Dataset Coverage
 
@@ -501,16 +497,3 @@ The most important quality signals are:
 
 ---
 
-## Assignment Fit
-
-The project implements the required components:
-
-- working Streamlit app,
-- web research using Tavily,
-- fetched web context,
-- citation-grounded answers,
-- persistent sessions and histories,
-- progress streaming,
-- evaluation harness,
-- README/design note,
-- no agent framework dependency.

@@ -258,19 +258,48 @@ if query:
         status_box = st.empty()
         progress_bar = st.progress(0)
 
-        progress_steps = {
-                    "Planning research query from session history.": 10,
-                    "Searching the web with Tavily.": 25,
-                    "Selecting the best URLs with Gemini.": 45,
-                    "Fetching selected pages concurrently.": 60,
-                    "Building research context.": 75,
-                    "Generating final answer with citations.": 85,
-                    "Repairing answer citations.": 95,
-                }
+        progress_state = {"value": 0}
 
         def update_progress(message: str):
+            message_lower = message.lower()
+
+            if "planning" in message_lower or "query" in message_lower:
+                next_progress = 10
+
+            elif "search" in message_lower or "tavily" in message_lower:
+                next_progress = 30
+
+            elif "select" in message_lower or "url" in message_lower or "gemini" in message_lower:
+                next_progress = 45
+
+            elif "fetch" in message_lower or "page" in message_lower:
+                next_progress = 60
+
+            elif "context" in message_lower:
+                next_progress = 75
+
+            elif "generating" in message_lower or "answer" in message_lower:
+                next_progress = 88
+
+            elif "citation" in message_lower or "repair" in message_lower:
+                next_progress = 95
+
+            else:
+                # Move forward slowly instead of jumping back to 10
+                next_progress = progress_state["value"] + 3
+
+            # Never allow progress to move backward
+            next_progress = max(progress_state["value"], next_progress)
+
+            # Keep below 100 until the pipeline is actually done
+            next_progress = min(next_progress, 95)
+
+            progress_state["value"] = next_progress
+
             status_box.info(message)
-            progress_bar.progress(progress_steps.get(message, 10))
+            progress_bar.progress(next_progress)
+
+            
 
         try:
             result = run_async(

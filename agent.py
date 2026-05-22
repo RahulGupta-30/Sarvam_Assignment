@@ -315,20 +315,103 @@ async def repair_answer_with_citations(
     return response.text
 
 
+def select_urls_fallback(search_results: list, limit: int = 8) -> list[dict]:
+    """
+    Fallback URL selector.
+
+    If Gemini returns broken JSON, we still continue the pipeline
+    by selecting the top Tavily results directly.
+    """
+
+    selected = []
+
+    for item in search_results:
+        url = item.get("url")
+        title = item.get("title") or "Untitled"
+
+        if not url:
+            continue
+
+        selected.append({
+            "title": title,
+            "url": url,
+            "reason": "Selected by fallback because Gemini returned invalid JSON."
+        })
+
+        if len(selected) >= limit:
+            break
+
+    return selected
+
+
+def parse_selected_urls_response(text: str) -> list[dict]:
+    """
+    Parses and validates Gemini's selected_urls JSON response.
+    """
+
+    cleaned = text.strip()
+
+    if cleaned.startswith("```json"):
+        cleaned = cleaned.removeprefix("```json").strip()
+
+    if cleaned.startswith("```"):
+        cleaned = cleaned.removeprefix("```").strip()
+
+    if cleaned.endswith("```"):
+        cleaned = cleaned.removesuffix("```").strip()
+
+    data = json.loads(cleaned)
+
+    selected_urls = data.get("selected_urls", [])
+
+    if not isinstance(selected_urls, list):
+        raise ValueError("selected_urls must be a list")
+
+    valid_urls = []
+
+    for item in selected_urls:
+        if not isinstance(item, dict):
+            continue
+
+        title = item.get("title")
+        url = item.get("url")
+        reason = item.get("reason", "")
+
+        if not title or not url:
+            continue
+
+        valid_urls.append({
+            "title": title,
+            "url": url,
+            "reason": reason
+        })
+
+    return valid_urls
+
+
 async def select_urls_with_gemini(query: str, search_results: list):
     """
     Uses Gemini to select the best URLs from Tavily search results.
+
+    If Gemini returns invalid JSON, falls back to Tavily's top results
+    instead of crashing the whole Streamlit app.
     """
 
     prompt = f"""
-            User query:
-            {query}
+User query:
+{query}
 
-            Search results:
-            {json.dumps(search_results, indent=2)}
+Search results:
+{json.dumps(search_results, indent=2)}
 
-            Select the best URLs to fetch for deep research.
-            """
+Select the best URLs to fetch for deep research.
+
+Return ONLY valid JSON.
+Do not use markdown.
+Do not add comments.
+Do not add trailing commas.
+Make sure every object has opening and closing braces.
+"""
 
     async with client.aio as aclient:
         response = await generate_content_with_fallback(
@@ -336,7 +419,7 @@ async def select_urls_with_gemini(query: str, search_results: list):
             models=GEMINI_URL_SELECTOR_MODELS,
             contents=prompt,
             config=types.GenerateContentConfig(
-                temperature=0.2,
+                temperature=0,
                 system_instruction=URL_SELECTOR_PROMPT,
                 response_mime_type="application/json",
             ),
@@ -344,11 +427,24 @@ async def select_urls_with_gemini(query: str, search_results: list):
         )
 
     try:
-        selected_data = json.loads(response.text)
-    except json.JSONDecodeError:
-        raise ValueError(f"Gemini did not return valid JSON:\n{response.text}")
+        selected_urls = parse_selected_urls_response(response.text)
 
-    return selected_data.get("selected_urls", [])
+        if selected_urls:
+            return selected_urls
+
+        print("URL selection: Gemini returned empty selected_urls. Using fallback.")
+        return select_urls_fallback(search_results)
+
+    except json.JSONDecodeError as error:
+        print("URL selection: Gemini returned invalid JSON.")
+        print(response.text)
+        print(f"JSON error: {error}")
+        return select_urls_fallback(search_results)
+
+    except Exception as error:
+        print(f"URL selection: failed to parse Gemini response: {error}")
+        print(response.text)
+        return select_urls_fallback(search_results)
 
 
 async def generate_final_answer(

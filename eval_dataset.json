@@ -1,92 +1,177 @@
 [
   {
-    "id": "factual_current_status",
+    "id": "factual_recent_event",
     "type": "factual",
-    "description": "Tests whether the agent can summarize a current geopolitical topic with citations.",
+    "description": "Tests accurate retrieval of a recent, well-documented scientific event. Checks citation presence and factual grounding.",
     "turns": [
       {
-        "query": "What is the current status of the US-Iran war?",
-        "expect_uncertainty": true,
+        "query": "What did the James Webb Space Telescope discover in 2024?",
+        "expect_uncertainty": false,
         "expect_conflict": false,
         "expect_follow_up": false,
-        "required_terms": ["Iran", "United States"]
+        "required_terms": [
+          "Webb",
+          "telescope",
+          "galaxy",
+          "light"
+        ]
       }
     ]
   },
   {
-    "id": "multi_hop_energy_impact",
+    "id": "multi_hop_health_policy",
     "type": "multi-hop",
-    "description": "Tests whether the agent connects geopolitical conflict, shipping routes, and oil markets.",
+    "description": "Tests multi-hop reasoning across health research, policy decisions, and economic outcomes.",
     "turns": [
       {
-        "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
-        "expect_uncertainty": true,
+        "query": "How has GLP-1 drug adoption (such as Ozempic) affected healthcare costs, insurance coverage, and pharmaceutical revenues?",
+        "expect_uncertainty": false,
         "expect_conflict": false,
         "expect_follow_up": false,
-        "required_terms": ["oil", "shipping", "Hormuz"]
+        "required_terms": [
+          "GLP-1",
+          "Ozempic",
+          "insurance",
+          "revenue"
+        ]
       }
     ]
   },
   {
-    "id": "comparison_sources",
+    "id": "comparison_energy_sources",
     "type": "comparison",
-    "description": "Tests comparison-style synthesis across sources.",
+    "description": "Tests whether agent can synthesize technical and economic comparisons across sources that may disagree on cost figures.",
     "turns": [
       {
-        "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
-        "expect_uncertainty": true,
-        "expect_conflict": false,
-        "expect_follow_up": false,
-        "required_terms": ["think tank", "news", "causes"]
-      }
-    ]
-  },
-  {
-    "id": "insufficient_evidence",
-    "type": "insufficient-evidence",
-    "description": "Tests whether the agent refuses to invent private or unverifiable information.",
-    "turns": [
-      {
-        "query": "What is the classified next US military strike plan against Iran?",
-        "expect_uncertainty": true,
-        "expect_conflict": false,
-        "expect_follow_up": false,
-        "required_terms": ["could not verify", "classified"]
-      }
-    ]
-  },
-  {
-    "id": "conflicting_sources",
-    "type": "conflicting-sources",
-    "description": "Tests whether the agent identifies disagreements or uncertainty across sources.",
-    "turns": [
-      {
-        "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+        "query": "Compare the cost per megawatt-hour of solar, wind, and nuclear energy in 2024.",
         "expect_uncertainty": true,
         "expect_conflict": true,
         "expect_follow_up": false,
-        "required_terms": ["casualty", "sources"]
+        "required_terms": [
+          "solar",
+          "wind",
+          "nuclear",
+          "megawatt",
+          "cost"
+        ]
       }
     ]
   },
   {
-    "id": "session_follow_up",
-    "type": "multi-turn-session",
-    "description": "Tests whether the agent uses session history to resolve a follow-up question.",
+    "id": "insufficient_evidence_private",
+    "type": "insufficient-evidence",
+    "description": "Tests refusal to fabricate private or internal corporate information not in public sources.",
     "turns": [
       {
-        "query": "Summarize the US-Iran war in brief.",
+        "query": "What is the internal product roadmap for Apple's next five years?",
         "expect_uncertainty": true,
         "expect_conflict": false,
         "expect_follow_up": false,
-        "required_terms": ["Iran", "United States"]
+        "required_terms": [
+          "Apple",
+          "not publicly",
+          "rumor"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "conflicting_sources_health",
+    "type": "conflicting-sources",
+    "description": "Tests conflict detection in a domain with ongoing scientific debate and varying study conclusions.",
+    "turns": [
+      {
+        "query": "Do studies agree on whether social media use causes depression in teenagers? Identify any conflicting findings.",
+        "expect_uncertainty": true,
+        "expect_conflict": true,
+        "expect_follow_up": false,
+        "required_terms": [
+          "social media",
+          "depression",
+          "teenagers",
+          "study"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "session_follow_up_finance",
+    "type": "multi-turn-session",
+    "description": "Tests pronoun resolution across turns in a finance context. Second turn 'its stock' requires prior context.",
+    "turns": [
+      {
+        "query": "Give me an overview of Nvidia's business in 2024.",
+        "expect_uncertainty": false,
+        "expect_conflict": false,
+        "expect_follow_up": false,
+        "required_terms": [
+          "Nvidia",
+          "GPU",
+          "data center",
+          "revenue"
+        ]
       },
       {
-        "query": "What impact did it have on oil prices and shipping?",
+        "query": "What are the main risks analysts have raised about its stock valuation?",
         "expect_uncertainty": true,
         "expect_conflict": false,
         "expect_follow_up": true,
-        "required_terms": ["oil", "shipping"]
+        "required_terms": [
+          "Nvidia",
+          "valuation",
+          "risk",
+          "analyst"
+        ]
+      },
+      {
+        "query": "How does it compare to AMD in the data center GPU market?",
+        "expect_uncertainty": false,
+        "expect_conflict": false,
+        "expect_follow_up": true,
+        "required_terms": [
+          "Nvidia",
+          "AMD",
+          "GPU",
+          "data center"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "citation_heavy_legal",
+    "type": "factual",
+    "description": "Tests citation quality on a topic requiring precise sourcing. Legal facts need direct source attribution.",
+    "turns": [
+      {
+        "query": "What did the US Supreme Court rule in the Loper Bright v. Raimondo case and what is its significance?",
+        "expect_uncertainty": false,
+        "expect_conflict": false,
+        "expect_follow_up": false,
+        "required_terms": [
+          "Supreme Court",
+          "Chevron",
+          "deference",
+          "agency"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ambiguous_query_handling",
+    "type": "factual",
+    "description": "Tests whether the agent handles an ambiguous query by clarifying scope or making scope explicit in the answer.",
+    "turns": [
+      {
+        "query": "What happened with Boeing recently?",
+        "expect_uncertainty": false,
+        "expect_conflict": false,
+        "expect_follow_up": false,
+        "required_terms": [
+          "Boeing",
+          "aircraft",
+          "safety",
+          "FAA"
+        ]
       }
     ]
   }

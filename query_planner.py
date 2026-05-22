@@ -1,5 +1,6 @@
 import json
 from google.genai import types
+import llm_provider
 
 
 QUERY_PLANNER_PROMPT = """
@@ -103,22 +104,20 @@ async def plan_research_query(
             Create a standalone research question and search queries.
             """
 
-    response = await aclient.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            temperature=0.1,
-            system_instruction=QUERY_PLANNER_PROMPT,
-            response_mime_type="application/json",
-        ),
+    response = await llm_provider.generate_text(
+        system_prompt=QUERY_PLANNER_PROMPT,
+        user_prompt=prompt,
+        temperature=0.1,
+        json_mode=True,
+        max_tokens=800,
     )
 
-    cleaned = clean_json_response(response.text)
+    cleaned = clean_json_response(response)
 
     try:
         data = json.loads(cleaned)
     except json.JSONDecodeError:
-        raise ValueError(f"Query planner returned invalid JSON:\n{response.text}")
+        raise ValueError(f"Query planner returned invalid JSON:\n{response}")
 
     search_query = data.get("search_query")
 

@@ -1,66 +1,189 @@
 # Deep Research Agent
 
-A Python-based Deep Research Agent that searches the web, fetches page content, builds a bounded research context, and generates citation-grounded answers with persistent session memory.
+A Python-based Deep Research Agent built for the Sarvam FDSE Assignment.
 
-The agent gathers multiple web pages , extracts their content, to generate the final result for deep research. The deep research terminology means gathering data from a wide variety of sources and presenting it to the user.
+The agent searches the live web, fetches source pages, builds a bounded research context, answers with citations, stores session history, streams progress updates, and includes an evaluation harness with deterministic checks, Groq-based judging, and a hallucination probe.
 
 ---
 
 ## Demo
 
+Video Demo: Add your video link here  
+Repository: https://github.com/RahulGupta-30/Sarvam_Assignment
 
-**Repository:** (https://github.com/RahulGupta-30/Sarvam_Assignment)
+---
 
+## Problem Statement
+
+Normal chatbots often answer confidently without showing where the information came from. For research tasks, especially current or conflicting topics, users need:
+
+- live web evidence,
+- source citations,
+- transparency into which sources were used,
+- session continuity across follow-up questions,
+- clear uncertainty when evidence is weak or conflicting.
+
+This project solves that by building a research pipeline that searches, fetches, filters, cites, validates, and stores the full research trace.
+
+---
+
+## Target Users
+
+This agent is useful for:
+
+- students doing current-topic research,
+- analysts comparing multiple sources,
+- product or policy teams tracking fast-changing areas,
+- users who need citation-grounded summaries,
+- anyone who wants a transparent first research pass instead of a black-box answer.
+
+---
+
+## Definition of Deep Research
+
+In this implementation, **deep research** means the agent does not only ask an LLM to answer.
+
+It:
+
+1. Plans a standalone research query.
+2. Searches the web using Tavily.
+3. Selects high-quality URLs for deeper reading.
+4. Fetches readable page content.
+5. Chunks and ranks source text.
+6. Builds a limited context with source metadata.
+7. Generates an answer using only fetched web context.
+8. Adds citations using title, domain, and URL.
+9. Validates citation URLs against fetched sources.
+10. Stores the session, conversation, and turn-level research artifacts.
+
+This is an assignment-level research agent, not a production research platform, but it demonstrates the full research-agent loop.
 
 ---
 
 ## Features
 
-- Web research using Tavily search.
-- Page extraction using Tavily extract.
-- Gemini-powered query planning for follow-up questions.
-- Gemini-powered URL selection from search results.
-- Concurrent page fetching for faster source acquisition.
-- Context builder that ranks and limits selected snippets.
-- Citation-grounded final answers using source title, domain, and URL.
-- Citation validation to detect invented or unsupported URLs.
-- Conflict and uncertainty handling in final responses.
-- Persistent SQLite sessions.
-- Conversation history and research turn history.
-- Rolling summary for long sessions.
-- Streamlit UI with progress updates and research trace.
-- Evaluation harness with factual, multi-hop, comparison, insufficient-evidence, conflicting-source, and multi-turn tests.
+### 1. Web Research
+
+- Uses Tavily for web search.
+- Search results include title, URL, snippet, domain, and score when available.
+- Uses Tavily extract to fetch readable page content.
+- Stores metadata such as URL, title, domain, and retrieval timestamp.
+
+### 2. Query Planning
+
+- Converts the user’s current question into a standalone research question.
+- Uses recent turns and rolling summary to resolve follow-ups.
+- Example: “What impact did it have?” can be rewritten using the previous topic.
+
+### 3. URL Selection
+
+- Uses an LLM to choose the best URLs from Tavily results.
+- Selection considers relevance, source quality, recency, and diversity.
+- Retry/fallback logic can reduce failures caused by model access, quota, or transient API errors.
+
+### 4. Context Construction
+
+The context builder:
+
+- cleans extracted text,
+- splits pages into overlapping chunks,
+- scores chunks against the query,
+- limits the total context size,
+- limits chunks per domain to encourage source diversity,
+- preserves source metadata for citation mapping.
+
+### 5. Citation-Grounded Answers
+
+The answer generator is instructed to:
+
+- use only the provided web context,
+- cite important factual claims,
+- use citation format `[Title — domain](URL)`,
+- mention source conflicts,
+- state uncertainty when evidence is weak or incomplete,
+- avoid invented facts.
+
+### 6. Citation Validation
+
+The citation validator checks:
+
+- whether the final answer contains citations,
+- whether cited URLs came from retrieved sources,
+- whether the model invented citation URLs.
+
+This is a deterministic URL-integrity check. It does not fully prove semantic support, which is why the evaluation harness adds a Groq-based judge and hallucination probe.
+
+### 7. Session Management
+
+SQLite is used to persist:
+
+- sessions,
+- messages,
+- research turns,
+- selected URLs,
+- fetched page previews,
+- used source chunks,
+- final answers,
+- rolling summaries.
+
+### 8. Streamlit UI
+
+The app provides:
+
+- chat interface,
+- session sidebar,
+- progress updates,
+- selected URL trace,
+- fetched page previews,
+- used context sources,
+- citation validation details,
+- previous turn history.
+
+### 9. Evaluation Harness
+
+The evaluator runs the agent over a dataset and creates JSON and Markdown reports.
+
+It includes:
+
+- deterministic citation URL checks,
+- search/fetch health checks,
+- follow-up rewrite checks,
+- Groq-based LLM judge scores,
+- hallucination probe results,
+- no single aggregate score.
 
 ---
 
-## Architecture Overview
+## Architecture
 
 ```text
-User question
+User Question
    ↓
-Streamlit UI
+Streamlit UI / CLI Evaluation
    ↓
-SQLite session lookup
+SQLite Session Lookup
    ↓
-Rolling summary update
+Rolling Summary Update
    ↓
-Query planner
+Query Planner
    ↓
-Tavily search
+Tavily Search
    ↓
-Gemini URL selector
+LLM URL Selector
    ↓
-Concurrent Tavily page extraction
+Tavily Page Extraction
    ↓
-Context builder
+Context Builder
    ↓
-Gemini final answer generator
+Final Answer Generator
    ↓
-Citation validator and optional repair
+Citation Validator
    ↓
-SQLite turn storage
+Optional Citation Repair
    ↓
-Answer + research trace in UI
+SQLite Turn Storage
+   ↓
+Answer + Research Trace
 ```
 
 ---
@@ -70,23 +193,21 @@ Answer + research trace in UI
 ```text
 .
 ├── app.py                    # Streamlit UI
-├── research_pipeline.py       # Main research orchestration pipeline
-├── agent.py                   # Gemini URL selection and answer generation
-├── query_planner.py           # Rewrites follow-up questions into standalone research queries
-├── search_tavily.py           # Tavily search module
-├── fetch_page.py              # Tavily page extraction module
-├── build_context.py           # Chunking, ranking, and context construction
-├── session_store.py           # SQLite session, message, and turn storage
-├── rolling_summary.py         # Long-history summarization
-├── citation_validator.py      # Citation integrity checks
+├── research_pipeline.py       # Main orchestration pipeline
+├── agent.py                   # URL selection, answer generation, citation repair
+├── query_planner.py           # Standalone query planning
+├── llm_provider.py            # Groq/OpenAI-compatible generation helper
+├── search_tavily.py           # Tavily search
+├── fetch_page.py              # Tavily page extraction
+├── build_context.py           # Chunking, ranking, context construction
+├── citation_validator.py      # Citation URL validation
+├── session_store.py           # SQLite session/message/turn storage
+├── rolling_summary.py         # Long-session summary
 ├── evaluate.py                # Evaluation harness
 ├── eval_dataset.json          # Evaluation dataset
 ├── requirements.txt
-├── .env.example
-└── research_sessions.db       # Created automatically; should not be committed
+└── research_sessions.db       # Generated locally
 ```
-
-
 
 ---
 
@@ -96,30 +217,74 @@ Answer + research trace in UI
 
 ```bash
 git clone <your-repo-url>
-cd <your-repo-name>
+cd Sarvam_Assignment
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Create a virtual environment
 
 ```bash
 python -m venv .venv
+```
 
-# Windows
+Windows:
+
+```bash
 .venv\Scripts\activate
+```
 
-# macOS/Linux
+macOS/Linux:
+
+```bash
 source .venv/bin/activate
 ```
 
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
 
 ### 4. Create `.env`
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root.
+
+Use plain `KEY=value` format. Do not wrap comma-separated model lists in quotes.
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 TAVILY_API_KEY=your_tavily_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
+
+GROQ_MODEL=llama-3.3-70b-versatile
+
+GEMINI_URL_SELECTOR_MODELS=gemini-2.5-flash
+GEMINI_FINAL_ANSWER_MODELS=gemini-2.5-flash
+GEMINI_CITATION_REPAIR_MODELS=gemini-2.5-flash
+
+MAX_MODEL_RETRIES=4
+MODEL_RETRY_BASE_SLEEP_SECONDS=3
+MODEL_RETRY_MAX_SLEEP_SECONDS=45
+
+EVAL_JUDGE_MODELS=llama-3.3-70b-versatile
+EVAL_JUDGE_MAX_TOKENS=4000
+
+MAX_JUDGE_RETRIES=3
+EVAL_RETRY_BASE_SLEEP_SECONDS=8
+EVAL_RETRY_MAX_SLEEP_SECONDS=90
+
+EVAL_SLEEP_AFTER_PIPELINE_SECONDS=3
+EVAL_SLEEP_BEFORE_JUDGE_CALL_SECONDS=4
+EVAL_SLEEP_BETWEEN_TURNS_SECONDS=6
+EVAL_SLEEP_BETWEEN_CASES_SECONDS=10
 ```
+
+Bad example:
+
+```env
+GEMINI_URL_SELECTOR_MODELS="gemini-3.5-flash","gemini-2.5-flash"
+```
+
+That can create invalid model names with stray quotes.
 
 ---
 
@@ -129,132 +294,29 @@ TAVILY_API_KEY=your_tavily_api_key_here
 streamlit run app.py
 ```
 
-Open the Streamlit URL shown in the terminal. Ask a research question such as:
+Example query:
 
 ```text
-What is the current status of the US-Iran war?
+What are the current EU AI Act requirements for high-risk AI systems?
 ```
 
-Then ask a follow-up:
+Example follow-up:
 
 ```text
-What impact did it have on oil prices and shipping?
+What penalties apply if companies do not comply?
 ```
 
-The second query should use session history to rewrite the question into a standalone research query before searching.
+The agent should use session history to resolve the follow-up, rewrite it as a standalone query, search fresh sources, and answer with citations.
 
 ---
 
-## How It Works
-
-### 1. Query Planning
-
-The query planner receives:
-
-- the current user question,
-- recent research turns,
-- the rolling session summary.
-
-It returns:
-
-- whether the question is a follow-up,
-- a standalone research question,
-- one or more Tavily search queries,
-- a short explanation of which history was used.
-
-Example:
-
-```json
-{
-  "is_follow_up": true,
-  "standalone_question": "What was the impact of the US-Iran war on oil prices and shipping through the Strait of Hormuz?",
-  "search_queries": [
-    "US Iran war oil prices shipping Strait of Hormuz impact",
-    "US Iran conflict impact on Brent crude oil and tanker routes"
-  ],
-  "history_used": "Used the previous turn about the US-Iran war to resolve 'it'."
-}
-```
-
-### 2. Search
-
-The search module sends the planner-generated queries to Tavily. Results are normalized into:
-
-```json
-{
-  "title": "...",
-  "url": "...",
-  "domain": "...",
-  "score": 0.91,
-  "snippet": "...",
-  "search_query": "..."
-}
-```
-
-### 3. URL Selection
-
-Gemini reviews the search results and selects the most useful URLs based on:
-
-- relevance,
-- source quality,
-- recency when available,
-- source diversity.
-
-### 4. Page Fetching
-
-Selected URLs are fetched concurrently. Each extracted page stores:
-
-- URL,
-- title,
-- domain,
-- retrieved timestamp,
-- readable text.
-
-### 5. Context Building
-
-The context builder splits pages into chunks, scores them against the standalone query, and builds a bounded prompt context. It preserves source metadata so the final answer can cite correctly.
-
-### 6. Final Answer Generation
-
-Gemini receives:
-
-- the original user question,
-- the standalone research question,
-- session context,
-- selected web context.
-
-It must answer using the current web context for factual claims and cite using:
-
-```text
-[Title — domain](URL)
-```
-
-### 7. Citation Validation
-
-The citation validator checks whether cited URLs in the final answer were present in the selected context sources. If citations are missing or invented, the answer can be repaired with another Gemini call.
-
-### 8. Session Memory
-
-SQLite stores:
-
-- sessions,
-- user and assistant messages,
-- turn-level research artifacts,
-- rolling summaries.
-
-The rolling summary compresses older messages so long conversations remain usable without sending the entire chat history to the model.
-
----
-
-## Evaluation Harness
-
-Run:
+## Run the Evaluation
 
 ```bash
 python evaluate.py
 ```
 
-The evaluation script runs the agent on `eval_dataset.json` and writes results to:
+Outputs are saved to:
 
 ```text
 evaluation_runs/
@@ -262,102 +324,193 @@ evaluation_runs/
 └── eval_report_<timestamp>.md
 ```
 
-### Dataset Coverage
+---
 
-The dataset includes:
+## Evaluation Methodology
+
+The evaluator separates objective checks from judgment-based quality review.
+
+### Deterministic Checks
+
+1. **Citation URL validity**  
+   Checks whether every cited URL exists in the fetched or used source set.
+
+2. **Search success**  
+   Checks whether search results were retrieved.
+
+3. **Fetch success**  
+   Checks whether page content was fetched.
+
+4. **Follow-up rewrite check**  
+   For follow-up turns, checks whether the standalone question changed.
+
+### Groq-Based LLM Judge
+
+The evaluator uses Groq instead of Gemini for judging so that the evaluator is separate from the generation path.
+
+The judge receives:
+
+- original user question,
+- standalone question,
+- dataset expectations,
+- fetched web context,
+- final answer.
+
+It scores from 1 to 5 on:
+
+- factual grounding,
+- conflict handling,
+- uncertainty calibration,
+- answer completeness,
+- follow-up resolution quality.
+
+Every score includes a justification.
+
+### Hallucination Probe
+
+A separate Groq call extracts factual claims from the answer and checks whether each claim is traceable to fetched source chunks.
+
+It reports:
+
+- supported claim count,
+- unsupported claim count,
+- unclear claim count,
+- hallucination risk,
+- explanations for claims needing review.
+
+### No Aggregate Score
+
+The evaluator intentionally avoids one overall score. A scorecard is more useful because it reveals whether the problem is citation integrity, grounding, completeness, uncertainty, conflict handling, or follow-up resolution.
+
+---
+
+## Dataset Coverage
+
+The dataset is designed to test:
 
 - factual questions,
-- multi-hop questions,
+- current events,
+- company status,
+- regulatory topics,
+- multi-hop reasoning,
 - comparison questions,
 - insufficient-evidence questions,
 - conflicting-source questions,
-- multi-turn follow-up questions.
+- multi-turn follow-ups,
+- adversarial false-premise questions,
+- broad questions that should be scoped carefully,
+- questions where evidence may not be publicly available.
 
-### Metrics
+Supported fields include:
 
-The evaluator scores each turn on:
+```json
+{
+  "reference_answer": "Expected answer summary",
+  "key_facts": ["Specific fact the answer should cover"],
+  "expected_behavior": "How the agent should behave",
+  "adversarial_type": "false_premise | outdated_sources | broad_scope | unfindable"
+}
+```
 
-- citation presence,
-- citation integrity,
-- source diversity,
-- selected context usage,
-- answer usefulness and length,
-- required term coverage,
-- uncertainty handling,
-- conflict handling,
-- follow-up resolution,
-- search/fetch success.
-
-
+---
 
 ## Example Conversation
 
 ### Turn 1
 
-**User:**
+**User**
 
 ```text
-Summarize the US-Iran war in brief.
+Summarize the global semiconductor shortage and its impact on the automotive industry.
 ```
 
-**Agent behavior:**
+**Agent behavior**
 
-- plans search strategy,
+- plans a search strategy,
 - searches Tavily,
 - selects sources,
-- fetches pages,
+- fetches page content,
 - builds context,
 - answers with citations,
-- stores turn history.
+- stores the research turn.
 
 ### Turn 2
 
-**User:**
+**User**
 
 ```text
-What impact did it have on oil prices and shipping?
+How did major automakers respond?
 ```
 
-**Agent behavior:**
+**Agent behavior**
 
-- uses session history to resolve `it` as the US-Iran war,
-- creates standalone query about oil prices and shipping impact,
+- uses session history to resolve the follow-up,
+- rewrites the query,
 - searches fresh sources,
-- answers using newly fetched web context.
+- answers from current fetched context,
+- cites sources.
+
+---
+
+## Success Metrics
+
+The most important quality signals are:
+
+1. citation URL validity,
+2. factual grounding,
+3. answer completeness,
+4. uncertainty and conflict handling,
+5. session continuity for follow-up questions,
+6. hallucination risk.
 
 ---
 
 ## Assumptions
 
-- Tavily is used as the web search and page extraction provider.
-- Gemini is used for query planning, URL selection, summarization, citation repair, and rolling summary generation.
-- SQLite is sufficient for local persistence in this assignment; a production multi-user deployment would use PostgreSQL.
-- Previous assistant answers are used only for conversation understanding, not as factual evidence.
-- Final factual claims should be grounded in the current fetched web context.
-- Some web pages may fail extraction or return incomplete text; the agent handles this by continuing with available sources.
+- Tavily is used for search and extraction.
+- Gemini is used in the research pipeline for source selection and answer generation.
+- Groq is used for evaluation judging and hallucination probing.
+- SQLite is sufficient for local persistence.
+- Previous answers are used for conversation understanding only, not as factual evidence.
+- Final factual claims should come from newly fetched web context.
 
 ---
 
 ## Limitations
 
-- Citation validation checks URL integrity, not full semantic support for every sentence.
-- Source recency depends on available metadata and page content.
-- The context builder uses lightweight relevance scoring; embeddings or reranking could improve snippet selection.
-- Tavily and Gemini rate limits can affect reliability.
-- Live news topics may contain conflicting or rapidly changing information.
-- The system may miss paywalled or JavaScript-heavy pages.
+- Citation URL validation does not prove semantic support.
+- Context ranking is lightweight and keyword-based.
+- Some sources may fail extraction.
+- Conflict detection is mostly prompt-driven.
+- API rate limits and model access issues can affect reliability.
+- SQLite is not ideal for production multi-user use.
+- The system may miss paywalled, JavaScript-heavy, or blocked pages.
 
 ---
 
 ## Future Improvements
 
-1. Add semantic citation verification using an LLM judge or embedding-based evidence matching.
-2. Add source quality classification such as official, news, think tank, encyclopedia, blog, or primary document.
-3. Add PostgreSQL support for multi-user production deployment.
-4. Add retry/backoff handling for API rate limits and transient fetch failures.
-5. Add stronger conflict detection before final answer generation.
-6. Add exportable PDF research reports.
+1. Add semantic reranking or embeddings for context selection.
+2. Add stricter claim-level verification before final answers.
+3. Add source quality classification.
+4. Add stronger conflict detection before generation.
+5. Add better handling when too few sources are fetched.
+6. Add PDF export for reports.
+7. Move all provider/model settings into a central config file.
+8. Add PostgreSQL for multi-user deployment.
 
 ---
 
+## Assignment Fit
 
+The project implements the required components:
+
+- working Streamlit app,
+- web research using Tavily,
+- fetched web context,
+- citation-grounded answers,
+- persistent sessions and histories,
+- progress streaming,
+- evaluation harness,
+- README/design note,
+- no agent framework dependency.

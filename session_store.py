@@ -8,9 +8,100 @@ from typing import Optional, List, Dict, Any
 DB_PATH = "research_sessions.db"
 
 
-def now_iso() -> str:
+import sqlite3
+import uuid
+from datetime import datetime
+
+
+DEFAULT_SESSION_TITLE = "New Research Session"
+
+
+def now_iso():
     return datetime.now().isoformat(timespec="seconds")
 
+
+
+
+def make_session_title_from_query(query: str, max_len: int = 55) -> str:
+    """
+    Use the first user query as the session title.
+    Trim whitespace and shorten long titles.
+    """
+    if not query:
+        return DEFAULT_SESSION_TITLE
+
+    cleaned = " ".join(query.strip().split())
+
+    if not cleaned:
+        return DEFAULT_SESSION_TITLE
+
+    if len(cleaned) > max_len:
+        return cleaned[:max_len].rstrip() + "..."
+
+    return cleaned
+
+
+def create_session(title: str | None = None) -> str:
+    session_id = str(uuid.uuid4())
+    title = title or DEFAULT_SESSION_TITLE
+
+    conn = connect_db()
+    conn.execute(
+        """
+        INSERT INTO sessions (session_id, title, rolling_summary, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (session_id, title, "", now_iso(), now_iso())
+    )
+    conn.commit()
+    conn.close()
+
+    return session_id
+
+
+def get_session(session_id: str) -> dict | None:
+    conn = connect_db()
+    row = conn.execute(
+        """
+        SELECT session_id, title, rolling_summary, created_at, updated_at
+        FROM sessions
+        WHERE session_id = ?
+        """,
+        (session_id,)
+    ).fetchone()
+    conn.close()
+
+    return dict(row) if row else None
+
+
+def update_session_title(session_id: str, title: str):
+    conn = connect_db()
+    conn.execute(
+        """
+        UPDATE sessions
+        SET title = ?, updated_at = ?
+        WHERE session_id = ?
+        """,
+        (title, now_iso(), session_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+def maybe_set_session_title_from_first_query(session_id: str, query: str):
+    """
+    If the session still has the default title, replace it with the first user query.
+    """
+    session = get_session(session_id)
+
+    if not session:
+        return
+
+    current_title = (session.get("title") or "").strip()
+
+    if not current_title or current_title == DEFAULT_SESSION_TITLE:
+        new_title = make_session_title_from_query(query)
+        update_session_title(session_id, new_title)
 
 def count_messages(session_id: str) -> int:
     conn = connect_db()
@@ -139,43 +230,6 @@ def init_db():
     conn.close()
 
 
-def create_session(title: Optional[str] = None) -> str:
-    """
-    Creates a new research session and returns session_id.
-    """
-
-    session_id = str(uuid.uuid4())
-    timestamp = now_iso()
-
-    conn = connect_db()
-    conn.execute(
-        """
-        INSERT INTO sessions (session_id, title, created_at, updated_at)
-        VALUES (?, ?, ?, ?)
-        """,
-        (session_id, title or "New Research Session", timestamp, timestamp)
-    )
-
-    conn.commit()
-    conn.close()
-
-    return session_id
-
-
-def get_session(session_id: str) -> Optional[Dict[str, Any]]:
-    conn = connect_db()
-
-    row = conn.execute(
-        "SELECT * FROM sessions WHERE session_id = ?",
-        (session_id,)
-    ).fetchone()
-
-    conn.close()
-
-    if not row:
-        return None
-
-    return dict(row)
 
 
 def list_sessions(limit: int = 20) -> List[Dict[str, Any]]:
@@ -212,20 +266,7 @@ def touch_session(session_id: str):
     conn.close()
 
 
-def update_session_title(session_id: str, title: str):
-    conn = connect_db()
 
-    conn.execute(
-        """
-        UPDATE sessions
-        SET title = ?, updated_at = ?
-        WHERE session_id = ?
-        """,
-        (title, now_iso(), session_id)
-    )
-
-    conn.commit()
-    conn.close()
 
 
 def add_message(session_id: str, role: str, content: str):

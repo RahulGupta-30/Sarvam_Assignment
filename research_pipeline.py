@@ -16,6 +16,7 @@ import agent
 import session_store
 import rolling_summary
 import query_planner
+import llm_provider
 
 load_dotenv()
 session_store.init_db()
@@ -95,7 +96,9 @@ async def run_research_pipeline(query: str, session_id: str, progress_callback=N
     context, used_sources = build_context.build_context(
         query=standalone_question,
         pages=fetched_pages,
-        max_chars=12000
+        max_chars=22000,
+        chunk_size=2000,
+        max_chunks_per_domain=2
     )
 
     history_context = session_store.build_history_context(session_id)

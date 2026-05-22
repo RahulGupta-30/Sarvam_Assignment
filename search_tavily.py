@@ -26,7 +26,7 @@ async def search_page(query: str):
         tavily_client.search,
         query=query,
         search_depth="advanced",
-        max_results=8
+        max_results=15
     )
 
     results = []

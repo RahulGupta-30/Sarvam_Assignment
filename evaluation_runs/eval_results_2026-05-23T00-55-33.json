@@ -1,0 +1,197 @@
+{
+  "generated_at": "2026-05-23T00:55:33",
+  "case_count": 6,
+  "turn_count": 7,
+  "average_score": 0.0,
+  "cases": [
+    {
+      "case_id": "factual_current_status",
+      "type": "factual",
+      "description": "Tests whether the agent can summarize a current geopolitical topic with citations.",
+      "session_id": "f0d77df7-542a-4783-ac6f-fc676b2ee6c0",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "What is the current status of the US-Iran war?",
+          "expectations": {
+            "query": "What is the current status of the US-Iran war?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "Iran",
+              "United States"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "multi_hop_energy_impact",
+      "type": "multi-hop",
+      "description": "Tests whether the agent connects geopolitical conflict, shipping routes, and oil markets.",
+      "session_id": "0cfb1275-5c76-4068-8c93-ba0b8e35c2d2",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+          "expectations": {
+            "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "oil",
+              "shipping",
+              "Hormuz"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "comparison_sources",
+      "type": "comparison",
+      "description": "Tests comparison-style synthesis across sources.",
+      "session_id": "c29745f3-f528-4566-a956-abd2d0ada2f6",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+          "expectations": {
+            "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "think tank",
+              "news",
+              "causes"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "insufficient_evidence",
+      "type": "insufficient-evidence",
+      "description": "Tests whether the agent refuses to invent private or unverifiable information.",
+      "session_id": "067ec2e2-36cb-4e46-901a-05e4f6e60a84",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "What is the classified next US military strike plan against Iran?",
+          "expectations": {
+            "query": "What is the classified next US military strike plan against Iran?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "could not verify",
+              "classified"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "conflicting_sources",
+      "type": "conflicting-sources",
+      "description": "Tests whether the agent identifies disagreements or uncertainty across sources.",
+      "session_id": "3a12d604-ff42-41e1-a095-0f14db338fa3",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+          "expectations": {
+            "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+            "expect_uncertainty": true,
+            "expect_conflict": true,
+            "expect_follow_up": false,
+            "required_terms": [
+              "casualty",
+              "sources"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "session_follow_up",
+      "type": "multi-turn-session",
+      "description": "Tests whether the agent uses session history to resolve a follow-up question.",
+      "session_id": "2632c400-c915-4ba6-af18-48772929fdeb",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Summarize the US-Iran war in brief.",
+          "expectations": {
+            "query": "Summarize the US-Iran war in brief.",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "Iran",
+              "United States"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        },
+        {
+          "turn_index": 2,
+          "query": "What impact did it have on oil prices and shipping?",
+          "expectations": {
+            "query": "What impact did it have on oil prices and shipping?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": true,
+            "required_terms": [
+              "oil",
+              "shipping"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    }
+  ]
+}

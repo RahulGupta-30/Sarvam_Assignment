@@ -1,0 +1,197 @@
+{
+  "generated_at": "2026-05-23T00:26:40",
+  "case_count": 6,
+  "turn_count": 7,
+  "average_score": 0.0,
+  "cases": [
+    {
+      "case_id": "factual_current_status",
+      "type": "factual",
+      "description": "Tests whether the agent can summarize a current geopolitical topic with citations.",
+      "session_id": "1d844d8b-6726-429d-a34b-0737bfff7b62",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "What is the current status of the US-Iran war?",
+          "expectations": {
+            "query": "What is the current status of the US-Iran war?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "Iran",
+              "United States"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "'str' object has no attribute 'text'"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "multi_hop_energy_impact",
+      "type": "multi-hop",
+      "description": "Tests whether the agent connects geopolitical conflict, shipping routes, and oil markets.",
+      "session_id": "80f93146-bfc3-45a7-aa61-2b23e1d10861",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+          "expectations": {
+            "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "oil",
+              "shipping",
+              "Hormuz"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "'str' object has no attribute 'text'"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "comparison_sources",
+      "type": "comparison",
+      "description": "Tests comparison-style synthesis across sources.",
+      "session_id": "76a4c55d-db7f-40c7-820e-92458e0ba4f3",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+          "expectations": {
+            "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "think tank",
+              "news",
+              "causes"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "'str' object has no attribute 'text'"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "insufficient_evidence",
+      "type": "insufficient-evidence",
+      "description": "Tests whether the agent refuses to invent private or unverifiable information.",
+      "session_id": "aaf73843-4ed4-4e58-abca-f40b7ad3368a",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "What is the classified next US military strike plan against Iran?",
+          "expectations": {
+            "query": "What is the classified next US military strike plan against Iran?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "could not verify",
+              "classified"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "'str' object has no attribute 'text'"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "conflicting_sources",
+      "type": "conflicting-sources",
+      "description": "Tests whether the agent identifies disagreements or uncertainty across sources.",
+      "session_id": "20108cc9-925f-4de7-8421-2127aecc37e3",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+          "expectations": {
+            "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+            "expect_uncertainty": true,
+            "expect_conflict": true,
+            "expect_follow_up": false,
+            "required_terms": [
+              "casualty",
+              "sources"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "'str' object has no attribute 'text'"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "session_follow_up",
+      "type": "multi-turn-session",
+      "description": "Tests whether the agent uses session history to resolve a follow-up question.",
+      "session_id": "9060baa4-c498-4031-b02c-0a08686a9187",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Summarize the US-Iran war in brief.",
+          "expectations": {
+            "query": "Summarize the US-Iran war in brief.",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "Iran",
+              "United States"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "'str' object has no attribute 'text'"
+        },
+        {
+          "turn_index": 2,
+          "query": "What impact did it have on oil prices and shipping?",
+          "expectations": {
+            "query": "What impact did it have on oil prices and shipping?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": true,
+            "required_terms": [
+              "oil",
+              "shipping"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "'str' object has no attribute 'text'"
+        }
+      ],
+      "average_score": 0.0
+    }
+  ]
+}

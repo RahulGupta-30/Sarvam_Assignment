@@ -1,15 +1,21 @@
 import os
 import json
 import asyncio
+import random
+from typing import Iterable
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
 import fetch_page
 import search_tavily
 import build_context
 import query_planner
 
-load_dotenv()
+
+
+load_dotenv(override=True)
 
 API_KEY = os.getenv("GEMINI_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
@@ -21,6 +27,188 @@ if not TAVILY_API_KEY:
     raise ValueError("TAVILY_API_KEY is missing from .env")
 
 client = genai.Client(api_key=API_KEY)
+
+
+
+
+def get_model_list(env_name: str, default_models: str) -> list[str]:
+    """
+    Reads a comma-separated model fallback list from .env.
+
+    Example:
+        GEMINI_FINAL_ANSWER_MODELS=gemini-3.5-flash,gemini-2.5-flash
+    """
+    raw_value = os.getenv(env_name, default_models)
+
+    return [
+        model.strip()
+        for model in raw_value.split(",")
+        if model.strip()
+    ]
+
+
+GEMINI_URL_SELECTOR_MODELS = get_model_list(
+    env_name="GEMINI_URL_SELECTOR_MODELS",
+    default_models="gemini-3.5-flash,gemini-2.5-flash",
+)
+
+GEMINI_FINAL_ANSWER_MODELS = get_model_list(
+    env_name="GEMINI_FINAL_ANSWER_MODELS",
+    default_models="gemini-3.5-flash,gemini-2.5-flash",
+)
+
+GEMINI_CITATION_REPAIR_MODELS = get_model_list(
+    env_name="GEMINI_CITATION_REPAIR_MODELS",
+    default_models="gemini-2.5-flash",
+)
+
+MAX_MODEL_RETRIES = int(os.getenv("MAX_MODEL_RETRIES", "4"))
+MODEL_RETRY_BASE_SLEEP_SECONDS = float(os.getenv("MODEL_RETRY_BASE_SLEEP_SECONDS", "3"))
+MODEL_RETRY_MAX_SLEEP_SECONDS = float(os.getenv("MODEL_RETRY_MAX_SLEEP_SECONDS", "45"))
+
+
+def _error_text(error: Exception) -> str:
+    """
+    Converts an exception into uppercase text so marker checks are simple.
+    """
+    return str(error).upper()
+
+
+def is_model_access_error(error: Exception) -> bool:
+    """
+    These errors usually do NOT get fixed by retrying the same model.
+
+    Example:
+    - 403 PERMISSION_DENIED
+    - Your project has been denied access
+    - model not found / unsupported model
+
+    For these, we immediately try the next fallback model.
+    """
+    text = _error_text(error)
+
+    access_markers = [
+        "403",
+        "PERMISSION_DENIED",
+        "DENIED ACCESS",
+        "HAS BEEN DENIED ACCESS",
+        "MODEL_NOT_FOUND",
+        "MODEL NOT FOUND",
+        "NOT FOUND",
+        "404",
+    ]
+
+    return any(marker in text for marker in access_markers)
+
+
+def is_retryable_model_error(error: Exception) -> bool:
+    """
+    These errors are often temporary, so retrying helps.
+
+    Examples:
+    - 429 RESOURCE_EXHAUSTED
+    - quota/rate limit pressure
+    - 500/502/503/504 server errors
+    - timeout/deadline errors
+    """
+    text = _error_text(error)
+
+    retryable_markers = [
+        "429",
+        "RESOURCE_EXHAUSTED",
+        "RATE_LIMIT",
+        "RATE LIMIT",
+        "QUOTA",
+        "500",
+        "INTERNAL",
+        "502",
+        "503",
+        "UNAVAILABLE",
+        "504",
+        "DEADLINE_EXCEEDED",
+        "TIMEOUT",
+        "TIMED OUT",
+    ]
+
+    return any(marker in text for marker in retryable_markers)
+
+
+async def generate_content_with_fallback(
+    aclient,
+    *,
+    models: Iterable[str],
+    contents: str,
+    config: types.GenerateContentConfig,
+    operation_name: str,
+    max_retries: int = MAX_MODEL_RETRIES,
+):
+    """
+    Calls Gemini with retry + fallback logic.
+
+    Algorithm:
+    1. Try each model in the configured fallback list.
+    2. For retryable errors such as quota/rate/server failures, retry the same model.
+    3. For access/model errors such as 403 or model not found, skip to the next model.
+    4. If every model fails, raise the last error.
+    """
+    model_list = list(models)
+
+    if not model_list:
+        raise ValueError(f"{operation_name}: no Gemini models configured.")
+
+    last_error = None
+
+    for model in model_list:
+        for attempt in range(1, max_retries + 1):
+            try:
+                print(f"{operation_name}: model={model}, attempt={attempt}")
+
+                response = await aclient.models.generate_content(
+                    model=model,
+                    contents=contents,
+                    config=config,
+                )
+
+                return response
+
+            except Exception as error:
+                last_error = error
+
+                if is_model_access_error(error):
+                    print(
+                        f"{operation_name}: access/model error for {model}. "
+                        f"Trying fallback model if available. Error: {error}"
+                    )
+                    break
+
+                if not is_retryable_model_error(error):
+                    print(
+                        f"{operation_name}: non-retryable error for {model}. "
+                        f"Trying fallback model if available. Error: {error}"
+                    )
+                    break
+
+                if attempt >= max_retries:
+                    print(
+                        f"{operation_name}: exhausted retries for {model}. "
+                        f"Trying fallback model if available. Error: {error}"
+                    )
+                    break
+
+                exponential_delay = MODEL_RETRY_BASE_SLEEP_SECONDS * (2 ** (attempt - 1))
+                capped_delay = min(MODEL_RETRY_MAX_SLEEP_SECONDS, exponential_delay)
+                jitter = random.uniform(0, 1.5)
+                wait_time = capped_delay + jitter
+
+                print(
+                    f"{operation_name}: retryable error for {model}. "
+                    f"Sleeping {wait_time:.1f}s before retry. Error: {error}"
+                )
+
+                await asyncio.sleep(wait_time)
+
+    raise last_error
+
 
 URL_SELECTOR_PROMPT = """
 You are a URL selector agent.
@@ -34,7 +222,7 @@ Select the best URLs based on:
 - source quality
 - recency if available
 - source diversity
-
+Select 6 to 8 high-quality URLs for deep research.
 Return exactly this structure:
 {
   "selected_urls": [
@@ -72,6 +260,7 @@ Rules:
 - If the evidence is weak or missing, say so honestly.
 - Give a clear, useful, well-structured answer.
 """
+
 
 async def repair_answer_with_citations(
     query: str,
@@ -112,16 +301,19 @@ async def repair_answer_with_citations(
                 """
 
     async with client.aio as aclient:
-        response = await aclient.models.generate_content(
-            model="gemini-2.5-flash",
+        response = await generate_content_with_fallback(
+            aclient,
+            models=GEMINI_CITATION_REPAIR_MODELS,
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.1,
                 system_instruction=FINAL_ANSWER_PROMPT,
             ),
+            operation_name="Citation repair",
         )
 
     return response.text
+
 
 async def select_urls_with_gemini(query: str, search_results: list):
     """
@@ -139,17 +331,17 @@ async def select_urls_with_gemini(query: str, search_results: list):
             """
 
     async with client.aio as aclient:
-        response = await aclient.models.generate_content(
-            model="gemini-3.5-flash",
+        response = await generate_content_with_fallback(
+            aclient,
+            models=GEMINI_URL_SELECTOR_MODELS,
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.2,
                 system_instruction=URL_SELECTOR_PROMPT,
                 response_mime_type="application/json",
             ),
+            operation_name="URL selection",
         )
-
-    
 
     try:
         selected_data = json.loads(response.text)
@@ -159,12 +351,11 @@ async def select_urls_with_gemini(query: str, search_results: list):
     return selected_data.get("selected_urls", [])
 
 
-
 async def generate_final_answer(
     query: str,
     standalone_question: str,
     web_context: str,
-    history_context: str = ""
+    history_context: str = "",
 ):
     prompt = f"""
             Original user question:
@@ -186,117 +377,15 @@ async def generate_final_answer(
             """
 
     async with client.aio as aclient:
-        response = await aclient.models.generate_content(
-            model="gemini-2.5-flash",
+        response = await generate_content_with_fallback(
+            aclient,
+            models=GEMINI_FINAL_ANSWER_MODELS,
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.2,
                 system_instruction=FINAL_ANSWER_PROMPT,
             ),
+            operation_name="Final answer generation",
         )
 
     return response.text
-
-
-
-
-# async def main():
-#     async with client.aio as aclient:
-#         while True:
-#             query = input("Enter Your Question: ").strip()
-
-#             if query.lower() == "exit":
-#                 print("Exiting the program.")
-#                 break
-
-#             print("Searching Tavily...")
-
-#             response = await search_tavily.search_page(query)
-
-#             prompt = f"""
-#                         User query: {query}
-
-#                         Search results: {json.dumps(response, indent=2)}
-
-#                         Select the best URLs to fetch for deep research.
-#                         """
-
-#             print("Selecting best URLs with Gemini...")
-
-#             response_2 = await aclient.models.generate_content(
-#                 model="gemini-3.5-flash",
-#                 contents=prompt,
-#                 config=types.GenerateContentConfig(
-#                     temperature=0.2,
-#                     system_instruction=SYSTEM_PROMPT_2,
-#                     response_mime_type="application/json",
-#                 ),
-#             )
-
-            
-
-
-#             selected_data = json.loads(response_2.text)
-
-#             selected_urls = selected_data.get("selected_urls", [])
-
-#             print("Fetching selected pages concurrently...")
-
-#             tasks = [
-#                 fetch_page.extract_page(item["url"], query=query)
-#                 for item in selected_urls
-#                 if item.get("url")
-#             ]
-
-#             page_batches = await asyncio.gather(
-#                 *tasks,
-#                 return_exceptions=True
-#             )
-
-#             fetched_pages = []
-
-#             for batch in page_batches:
-#                 if isinstance(batch, Exception):
-#                     print(f"Error fetching page: {batch}")
-#                     continue
-
-#                 fetched_pages.extend(batch)
-
-
-#             context, used_sources = build_context.build_context(
-#                 query=query,
-#                 pages=fetched_pages,
-#                 max_chars=12000,
-#                 chunk_size=1800,
-#                 max_chunks_per_domain=2
-#             )
-
-
-#             print("Generating final answer with citations...")
-
-#             final_prompt = f"""
-#             User question:
-#             {query}
-
-#             Web context:
-#             {context}
-
-#             Now answer the user's question using only the provided context.
-#             """
-
-#             final_response = await aclient.models.generate_content(
-#                 model="gemini-3.5-flash",
-#                 contents=final_prompt,
-#                 config=types.GenerateContentConfig(
-#                     temperature=0.2,
-#                     system_instruction=FINAL_ANSWER_PROMPT,
-#                 ),
-#             )
-
-#             print("\nFinal Answer:")
-#             print(final_response.text)
-            
-
-
-# if __name__ == "__main__":
-#     asyncio.run(main())

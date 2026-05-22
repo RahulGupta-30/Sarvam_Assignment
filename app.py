@@ -1,12 +1,10 @@
-import os
-import json
+
 import asyncio
-from datetime import datetime
+
 
 import streamlit as st
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+
 from research_pipeline import run_research_pipeline
 import search_tavily
 import fetch_page
@@ -20,22 +18,6 @@ import query_planner
 
 load_dotenv()
 session_store.init_db()
-
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
-
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY is missing from .env")
-
-if not TAVILY_API_KEY:
-    raise ValueError("TAVILY_API_KEY is missing from .env")
-
-
-client = genai.Client(api_key=GEMINI_API_KEY)
-
-
-
-
 
 
 def run_async(coro):
@@ -68,7 +50,33 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown(
+    """
+    <style>
+    section[data-testid="stSidebar"] {
+        background-color: #0f1117;
+    }
 
+    section[data-testid="stSidebar"] .stButton > button {
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    section[data-testid="stSidebar"] .stSelectbox label {
+        font-weight: 600;
+    }
+
+    div[data-baseweb="select"] > div {
+        border-radius: 10px !important;
+    }
+
+    .block-container {
+        padding-top: 1.2rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # -------------------------------------------------
 # Database/session initialization
 # -------------------------------------------------
@@ -100,70 +108,110 @@ st.caption("Search → select sources → fetch pages → build context → answ
 # -------------------------------------------------
 
 with st.sidebar:
-    st.header("Sessions")
+    st.markdown("## 🔎 Research Sessions")
 
-    st.caption(f"Current session: `{st.session_state.session_id[:8]}`")
+    st.caption("Manage and reopen your previous research chats.")
 
-    sessions = session_store.list_sessions(limit=20)
+    # ---- buttons row ----
+    col1, col2 = st.columns(2)
 
-    session_options = {
-        f"{s['title']} | {s['updated_at']}": s["session_id"]
-        for s in sessions
-    }
-
-    if session_options:
-        selected_label = st.selectbox(
-            "Load session",
-            options=list(session_options.keys())
-        )
-
-        if st.button("Load selected session"):
-            st.session_state.session_id = session_options[selected_label]
-            st.session_state.messages = session_store.get_messages(
-                st.session_state.session_id
-            )
+    with col1:
+        if st.button("➕ New", use_container_width=True):
+            st.session_state.session_id = session_store.create_session()
+            st.session_state.messages = []
             st.session_state.last_result = None
             st.rerun()
 
-    if st.button("New session"):
-        st.session_state.session_id = session_store.create_session()
-        st.session_state.messages = []
-        st.session_state.last_result = None
-        st.rerun()
-
-    if st.button("Delete current session"):
-        session_store.delete_session(st.session_state.session_id)
-        st.session_state.session_id = session_store.create_session()
-        st.session_state.messages = []
-        st.session_state.last_result = None
-        st.rerun()
+    with col2:
+        if st.button("🗑 Delete", use_container_width=True):
+            session_store.delete_session(st.session_state.session_id)
+            st.session_state.session_id = session_store.create_session()
+            st.session_state.messages = []
+            st.session_state.last_result = None
+            st.rerun()
 
     st.divider()
 
-    st.header("Settings")
+    sessions = session_store.list_sessions(limit=30)
 
-    with st.expander("Rolling Summary", expanded=False):
-        summary = session_store.get_rolling_summary(st.session_state.session_id)
+    normal_sessions = []
+    eval_sessions = []
 
-    if summary:
-        st.write(summary)
+    for s in sessions:
+        title = (s.get("title") or "").strip()
+        if title.startswith("eval::"):
+            eval_sessions.append(s)
+        else:
+            normal_sessions.append(s)
+
+    def format_session_label(session: dict) -> str:
+        title = (session.get("title") or "Untitled Session").strip()
+
+        if len(title) > 42:
+            title = title[:42].rstrip() + "..."
+
+        updated_at = session.get("updated_at", "")
+        updated_display = updated_at.replace("T", " ")[:16] if updated_at else ""
+
+        return f"{title} · {updated_display}"
+
+    if normal_sessions:
+        st.markdown("### Recent Sessions")
+
+        session_map = {s["session_id"]: s for s in normal_sessions}
+        session_ids = [s["session_id"] for s in normal_sessions]
+
+        current_index = 0
+        if st.session_state.session_id in session_ids:
+            current_index = session_ids.index(st.session_state.session_id)
+
+        selected_session_id = st.selectbox(
+            "Choose a session",
+            options=session_ids,
+            index=current_index,
+            format_func=lambda sid: format_session_label(session_map[sid]),
+            label_visibility="collapsed"
+        )
+
+        if selected_session_id != st.session_state.session_id:
+            st.session_state.session_id = selected_session_id
+            st.session_state.messages = session_store.get_messages(selected_session_id)
+            st.session_state.last_result = None
+            st.rerun()
     else:
-        st.caption("No rolling summary yet. It will be created after the conversation gets longer.")
+        st.info("No normal sessions yet.")
 
-    st.info(
-        "Current pipeline uses Tavily for search/fetch and Gemini for "
-        "query planning, URL selection, and final answer generation."
-    )
+    if eval_sessions:
+        with st.expander("Evaluation Sessions", expanded=False):
+            eval_map = {s["session_id"]: s for s in eval_sessions}
+            eval_ids = [s["session_id"] for s in eval_sessions]
+
+            selected_eval_id = st.selectbox(
+                "Choose an eval session",
+                options=[""] + eval_ids,
+                format_func=lambda sid: "Select..." if sid == "" else format_session_label(eval_map[sid]),
+                label_visibility="collapsed",
+                key="eval_session_selectbox"
+            )
+
+            if selected_eval_id and selected_eval_id != st.session_state.session_id:
+                st.session_state.session_id = selected_eval_id
+                st.session_state.messages = session_store.get_messages(selected_eval_id)
+                st.session_state.last_result = None
+                st.rerun()
+
+    st.divider()
+
+    st.markdown("### Current Session")
+    current_session = session_store.get_session(st.session_state.session_id)
+
+    if current_session:
+        st.success(f"**{current_session.get('title', 'Untitled Session')}**")
+        st.caption(f"Updated: {current_session.get('updated_at', '')}")
+
+    st.divider()
 
     show_debug = st.checkbox("Show debug data", value=False)
-
-    st.divider()
-
-    if st.button("Clear conversation / start fresh"):
-        st.session_state.session_id = session_store.create_session()
-        st.session_state.messages = []
-        st.session_state.last_result = None
-        st.rerun()
 
 
 # -------------------------------------------------
@@ -188,6 +236,11 @@ if query:
         session_id=st.session_state.session_id,
         role="user",
         content=query
+    )
+
+    session_store.maybe_set_session_title_from_first_query(
+    st.session_state.session_id,
+    query
     )
 
     # Save user message to Streamlit state

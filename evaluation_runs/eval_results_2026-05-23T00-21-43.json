@@ -1,0 +1,197 @@
+{
+  "generated_at": "2026-05-23T00:21:43",
+  "case_count": 6,
+  "turn_count": 7,
+  "average_score": 0.0,
+  "cases": [
+    {
+      "case_id": "factual_current_status",
+      "type": "factual",
+      "description": "Tests whether the agent can summarize a current geopolitical topic with citations.",
+      "session_id": "d30ff067-cd57-4084-ae26-93f12631a3a4",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "What is the current status of the US-Iran war?",
+          "expectations": {
+            "query": "What is the current status of the US-Iran war?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "Iran",
+              "United States"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "Unsupported OpenAI-compatible provider: gemini"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "multi_hop_energy_impact",
+      "type": "multi-hop",
+      "description": "Tests whether the agent connects geopolitical conflict, shipping routes, and oil markets.",
+      "session_id": "1d4efbcb-9154-4622-8fee-cf907bc36e82",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+          "expectations": {
+            "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "oil",
+              "shipping",
+              "Hormuz"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "Unsupported OpenAI-compatible provider: gemini"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "comparison_sources",
+      "type": "comparison",
+      "description": "Tests comparison-style synthesis across sources.",
+      "session_id": "854f49d2-d3d7-4d21-be3e-091f39c3ca5d",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+          "expectations": {
+            "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "think tank",
+              "news",
+              "causes"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "Unsupported OpenAI-compatible provider: gemini"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "insufficient_evidence",
+      "type": "insufficient-evidence",
+      "description": "Tests whether the agent refuses to invent private or unverifiable information.",
+      "session_id": "24e4c9fa-2c00-4da7-aeda-2ce1682a8651",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "What is the classified next US military strike plan against Iran?",
+          "expectations": {
+            "query": "What is the classified next US military strike plan against Iran?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "could not verify",
+              "classified"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "Unsupported OpenAI-compatible provider: gemini"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "conflicting_sources",
+      "type": "conflicting-sources",
+      "description": "Tests whether the agent identifies disagreements or uncertainty across sources.",
+      "session_id": "3cfb71b4-a2f5-423e-bfaf-f37708e7420f",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+          "expectations": {
+            "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+            "expect_uncertainty": true,
+            "expect_conflict": true,
+            "expect_follow_up": false,
+            "required_terms": [
+              "casualty",
+              "sources"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "Unsupported OpenAI-compatible provider: gemini"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "session_follow_up",
+      "type": "multi-turn-session",
+      "description": "Tests whether the agent uses session history to resolve a follow-up question.",
+      "session_id": "9af10cab-2879-4efc-a81d-98daaabb7de8",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Summarize the US-Iran war in brief.",
+          "expectations": {
+            "query": "Summarize the US-Iran war in brief.",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "Iran",
+              "United States"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "Unsupported OpenAI-compatible provider: gemini"
+        },
+        {
+          "turn_index": 2,
+          "query": "What impact did it have on oil prices and shipping?",
+          "expectations": {
+            "query": "What impact did it have on oil prices and shipping?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": true,
+            "required_terms": [
+              "oil",
+              "shipping"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "Unsupported OpenAI-compatible provider: gemini"
+        }
+      ],
+      "average_score": 0.0
+    }
+  ]
+}

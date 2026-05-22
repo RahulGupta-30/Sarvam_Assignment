@@ -86,7 +86,7 @@ Answer + research trace in UI
 └── research_sessions.db       # Created automatically; should not be committed
 ```
 
-If `run_research_pipeline()` is still inside `app.py`, move it into `research_pipeline.py` before final submission so the evaluation script can import it without launching the Streamlit UI.
+
 
 ---
 
@@ -111,11 +111,6 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
 
 ### 4. Create `.env`
 
@@ -293,21 +288,7 @@ The evaluator scores each turn on:
 - follow-up resolution,
 - search/fetch success.
 
-### Latest Evaluation Results
 
-TODO: After running `python evaluate.py`, paste a short summary here.
-
-Example format:
-
-| Metric | Result |
-|---|---:|
-| Cases evaluated | TODO |
-| Turns evaluated | TODO |
-| Average score | TODO |
-| Citation integrity avg | TODO |
-| Follow-up handling avg | TODO |
-
----
 
 ## Example Conversation
 
@@ -379,18 +360,4 @@ What impact did it have on oil prices and shipping?
 
 ---
 
-## Submission Checklist
 
-- [ ] Working Streamlit app
-- [ ] Tavily search and page extraction
-- [ ] Persistent SQLite sessions
-- [ ] Conversation and turn history
-- [ ] Rolling summary
-- [ ] Citation-grounded answers
-- [ ] Citation validation
-- [ ] Conflict and uncertainty handling
-- [ ] Evaluation harness
-- [ ] README and design note
-- [ ] Demo video link
-- [ ] GitHub repository link
-- [ ] Final submission PDF with links and assumptions

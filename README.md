@@ -8,9 +8,9 @@ The agent gathers multiple web pages , extracts their content, to generate the f
 
 ## Demo
 
-**Video demo:** TODO: add your Loom/Drive/YouTube link here  
-**Repository:** TODO: add your GitHub repository link here  
-**Live app:** Optional: add Streamlit Cloud/Hugging Face Spaces link if deployed
+
+**Repository:** (https://github.com/RahulGupta-30/Sarvam_Assignment)
+
 
 ---
 

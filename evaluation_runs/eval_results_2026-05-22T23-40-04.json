@@ -1,0 +1,197 @@
+{
+  "generated_at": "2026-05-22T23:40:04",
+  "case_count": 6,
+  "turn_count": 7,
+  "average_score": 0.0,
+  "cases": [
+    {
+      "case_id": "factual_current_status",
+      "type": "factual",
+      "description": "Tests whether the agent can summarize a current geopolitical topic with citations.",
+      "session_id": "61ec2794-ce20-4f7e-8503-0d15e994a55d",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "What is the current status of the US-Iran war?",
+          "expectations": {
+            "query": "What is the current status of the US-Iran war?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "Iran",
+              "United States"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "multi_hop_energy_impact",
+      "type": "multi-hop",
+      "description": "Tests whether the agent connects geopolitical conflict, shipping routes, and oil markets.",
+      "session_id": "a5dd21f9-ade3-4d64-a18e-27ad4eaba387",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+          "expectations": {
+            "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "oil",
+              "shipping",
+              "Hormuz"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "comparison_sources",
+      "type": "comparison",
+      "description": "Tests comparison-style synthesis across sources.",
+      "session_id": "3a010732-3f73-4a24-866e-d1ac0bb4e8d3",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+          "expectations": {
+            "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "think tank",
+              "news",
+              "causes"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "insufficient_evidence",
+      "type": "insufficient-evidence",
+      "description": "Tests whether the agent refuses to invent private or unverifiable information.",
+      "session_id": "1174542b-637b-4575-b608-b4d939a14a32",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "What is the classified next US military strike plan against Iran?",
+          "expectations": {
+            "query": "What is the classified next US military strike plan against Iran?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "could not verify",
+              "classified"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "conflicting_sources",
+      "type": "conflicting-sources",
+      "description": "Tests whether the agent identifies disagreements or uncertainty across sources.",
+      "session_id": "27eb6f15-2bd6-47d1-8ef8-67a42771cf5a",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+          "expectations": {
+            "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+            "expect_uncertainty": true,
+            "expect_conflict": true,
+            "expect_follow_up": false,
+            "required_terms": [
+              "casualty",
+              "sources"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        }
+      ],
+      "average_score": 0.0
+    },
+    {
+      "case_id": "session_follow_up",
+      "type": "multi-turn-session",
+      "description": "Tests whether the agent uses session history to resolve a follow-up question.",
+      "session_id": "fe3dfa06-35e8-4f3a-8147-27e7cc2b0be8",
+      "turns": [
+        {
+          "turn_index": 1,
+          "query": "Summarize the US-Iran war in brief.",
+          "expectations": {
+            "query": "Summarize the US-Iran war in brief.",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": false,
+            "required_terms": [
+              "Iran",
+              "United States"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your project has been denied access. Please contact support.', 'status': 'PERMISSION_DENIED'}}"
+        },
+        {
+          "turn_index": 2,
+          "query": "What impact did it have on oil prices and shipping?",
+          "expectations": {
+            "query": "What impact did it have on oil prices and shipping?",
+            "expect_uncertainty": true,
+            "expect_conflict": false,
+            "expect_follow_up": true,
+            "required_terms": [
+              "oil",
+              "shipping"
+            ]
+          },
+          "scores": {
+            "overall_score": 0.0
+          },
+          "result": null,
+          "error": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-2.5-flash\\nPlease retry in 6.852902226s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-2.5-flash', 'location': 'global'}, 'quotaValue': '5'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '6s'}]}}"
+        }
+      ],
+      "average_score": 0.0
+    }
+  ]
+}

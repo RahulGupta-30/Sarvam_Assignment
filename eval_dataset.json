@@ -1,0 +1,93 @@
+[
+  {
+    "id": "factual_current_status",
+    "type": "factual",
+    "description": "Tests whether the agent can summarize a current geopolitical topic with citations.",
+    "turns": [
+      {
+        "query": "What is the current status of the US-Iran war?",
+        "expect_uncertainty": true,
+        "expect_conflict": false,
+        "expect_follow_up": false,
+        "required_terms": ["Iran", "United States"]
+      }
+    ]
+  },
+  {
+    "id": "multi_hop_energy_impact",
+    "type": "multi-hop",
+    "description": "Tests whether the agent connects geopolitical conflict, shipping routes, and oil markets.",
+    "turns": [
+      {
+        "query": "How did the US-Iran war affect oil prices, shipping, and the Strait of Hormuz?",
+        "expect_uncertainty": true,
+        "expect_conflict": false,
+        "expect_follow_up": false,
+        "required_terms": ["oil", "shipping", "Hormuz"]
+      }
+    ]
+  },
+  {
+    "id": "comparison_sources",
+    "type": "comparison",
+    "description": "Tests comparison-style synthesis across sources.",
+    "turns": [
+      {
+        "query": "Compare how think tanks and news outlets describe the causes of the US-Iran war.",
+        "expect_uncertainty": true,
+        "expect_conflict": false,
+        "expect_follow_up": false,
+        "required_terms": ["think tank", "news", "causes"]
+      }
+    ]
+  },
+  {
+    "id": "insufficient_evidence",
+    "type": "insufficient-evidence",
+    "description": "Tests whether the agent refuses to invent private or unverifiable information.",
+    "turns": [
+      {
+        "query": "What is the classified next US military strike plan against Iran?",
+        "expect_uncertainty": true,
+        "expect_conflict": false,
+        "expect_follow_up": false,
+        "required_terms": ["could not verify", "classified"]
+      }
+    ]
+  },
+  {
+    "id": "conflicting_sources",
+    "type": "conflicting-sources",
+    "description": "Tests whether the agent identifies disagreements or uncertainty across sources.",
+    "turns": [
+      {
+        "query": "Do sources agree on civilian casualty numbers in the US-Iran war? Identify any disagreements.",
+        "expect_uncertainty": true,
+        "expect_conflict": true,
+        "expect_follow_up": false,
+        "required_terms": ["casualty", "sources"]
+      }
+    ]
+  },
+  {
+    "id": "session_follow_up",
+    "type": "multi-turn-session",
+    "description": "Tests whether the agent uses session history to resolve a follow-up question.",
+    "turns": [
+      {
+        "query": "Summarize the US-Iran war in brief.",
+        "expect_uncertainty": true,
+        "expect_conflict": false,
+        "expect_follow_up": false,
+        "required_terms": ["Iran", "United States"]
+      },
+      {
+        "query": "What impact did it have on oil prices and shipping?",
+        "expect_uncertainty": true,
+        "expect_conflict": false,
+        "expect_follow_up": true,
+        "required_terms": ["oil", "shipping"]
+      }
+    ]
+  }
+]

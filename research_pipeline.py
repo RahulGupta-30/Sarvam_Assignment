@@ -46,14 +46,14 @@ async def run_research_pipeline(query: str, session_id: str, progress_callback=N
             session_id=session_id
         )
 
-    current_rolling_summary = session_store.get_rolling_summary(session_id)
+        current_rolling_summary = session_store.get_rolling_summary(session_id)
 
-    query_plan = await query_planner.plan_research_query(
-        aclient=aclient,
-        current_query=query,
-        previous_turns=previous_turns,
-        rolling_summary=current_rolling_summary
-    )
+        query_plan = await query_planner.plan_research_query(
+            aclient=aclient,
+            current_query=query,
+            previous_turns=previous_turns,
+            rolling_summary=current_rolling_summary
+        )
 
     standalone_question = query_plan["standalone_question"]
     search_query = query_plan["search_query"]

@@ -28,7 +28,29 @@ if not TAVILY_API_KEY:
 
 client = genai.Client(api_key=API_KEY)
 
+async def generate_with_fresh_gemini_client(
+    *,
+    models,
+    contents: str,
+    config: types.GenerateContentConfig,
+    operation_name: str,
+):
+    """
+    Creates a fresh Gemini client for one operation.
 
+    This avoids reusing an async client that was already closed
+    by a previous `async with client.aio` block.
+    """
+    local_client = genai.Client(api_key=API_KEY)
+
+    async with local_client.aio as aclient:
+        return await generate_content_with_fallback(
+            aclient,
+            models=models,
+            contents=contents,
+            config=config,
+            operation_name=operation_name,
+        )
 
 
 def get_model_list(env_name: str, default_models: str) -> list[str]:
@@ -300,17 +322,15 @@ async def repair_answer_with_citations(
                 - The answer follows the required structure.
                 """
 
-    async with client.aio as aclient:
-        response = await generate_content_with_fallback(
-            aclient,
-            models=GEMINI_CITATION_REPAIR_MODELS,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.1,
-                system_instruction=FINAL_ANSWER_PROMPT,
-            ),
-            operation_name="Citation repair",
-        )
+    response = await generate_with_fresh_gemini_client(
+    models=GEMINI_CITATION_REPAIR_MODELS,
+    contents=prompt,
+    config=types.GenerateContentConfig(
+        temperature=0.1,
+        system_instruction=FINAL_ANSWER_PROMPT,
+    ),
+    operation_name="Citation repair",
+)
 
     return response.text
 
@@ -413,18 +433,16 @@ Do not add trailing commas.
 Make sure every object has opening and closing braces.
 """
 
-    async with client.aio as aclient:
-        response = await generate_content_with_fallback(
-            aclient,
-            models=GEMINI_URL_SELECTOR_MODELS,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0,
-                system_instruction=URL_SELECTOR_PROMPT,
-                response_mime_type="application/json",
-            ),
-            operation_name="URL selection",
-        )
+    response = await generate_with_fresh_gemini_client(
+    models=GEMINI_URL_SELECTOR_MODELS,
+    contents=prompt,
+    config=types.GenerateContentConfig(
+        temperature=0,
+        system_instruction=URL_SELECTOR_PROMPT,
+        response_mime_type="application/json",
+    ),
+    operation_name="URL selection",
+)
 
     try:
         selected_urls = parse_selected_urls_response(response.text)
@@ -472,16 +490,14 @@ async def generate_final_answer(
             Use current web context as the evidence for factual claims.
             """
 
-    async with client.aio as aclient:
-        response = await generate_content_with_fallback(
-            aclient,
-            models=GEMINI_FINAL_ANSWER_MODELS,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.2,
-                system_instruction=FINAL_ANSWER_PROMPT,
-            ),
-            operation_name="Final answer generation",
-        )
+    response = await generate_with_fresh_gemini_client(
+    models=GEMINI_FINAL_ANSWER_MODELS,
+    contents=prompt,
+    config=types.GenerateContentConfig(
+        temperature=0.2,
+        system_instruction=FINAL_ANSWER_PROMPT,
+    ),
+    operation_name="Final answer generation",
+)
 
     return response.text

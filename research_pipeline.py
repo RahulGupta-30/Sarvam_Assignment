@@ -40,7 +40,9 @@ async def run_research_pipeline(query: str, session_id: str, progress_callback=N
 
     previous_turns = session_store.get_turns(session_id, limit=3)
 
-    async with client.aio as aclient:
+    local_client = genai.Client(api_key=GEMINI_API_KEY)
+
+    async with local_client.aio as aclient:
         await rolling_summary.maybe_update_rolling_summary(
             aclient=aclient,
             session_id=session_id

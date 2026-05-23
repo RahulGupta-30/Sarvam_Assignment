@@ -14,36 +14,22 @@ import agent
 import session_store
 import rolling_summary
 import query_planner
-from concurrent.futures import ThreadPoolExecutor
 
 
 load_dotenv()
 session_store.init_db()
 
 
-def run_async(async_fn, *args, **kwargs):
+def run_async(coro):
     """
-    Run an async function from Streamlit sync code.
-
-    Important:
-    Pass the async function itself, not an already-created coroutine.
-    This avoids reusing an already-awaited coroutine.
+    Helper to run async code from Streamlit button clicks.
     """
-
     try:
-        asyncio.get_running_loop()
+        return asyncio.run(coro)
     except RuntimeError:
-        # Normal Streamlit case: no event loop is already running here
-        return asyncio.run(async_fn(*args, **kwargs))
-
-    # Fallback case: if an event loop is already running,
-    # run the async function in a separate thread with its own loop.
-    def runner():
-        return asyncio.run(async_fn(*args, **kwargs))
-
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(runner)
-        return future.result()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
 
 
 # -------------------------------
@@ -272,56 +258,27 @@ if query:
         status_box = st.empty()
         progress_bar = st.progress(0)
 
-        progress_state = {"value": 0}
+        progress_steps = {
+                    "Planning research query from session history.": 10,
+                    "Searching the web with Tavily.": 25,
+                    "Selecting the best URLs with Gemini.": 45,
+                    "Fetching selected pages concurrently.": 60,
+                    "Building research context.": 75,
+                    "Generating final answer with citations.": 85,
+                    "Repairing answer citations.": 95,
+                }
 
         def update_progress(message: str):
-            message_lower = message.lower()
-
-            if "planning" in message_lower or "query" in message_lower:
-                next_progress = 10
-
-            elif "search" in message_lower or "tavily" in message_lower:
-                next_progress = 30
-
-            elif "select" in message_lower or "url" in message_lower or "gemini" in message_lower:
-                next_progress = 45
-
-            elif "fetch" in message_lower or "page" in message_lower:
-                next_progress = 60
-
-            elif "context" in message_lower:
-                next_progress = 75
-
-            elif "generating" in message_lower or "answer" in message_lower:
-                next_progress = 88
-
-            elif "citation" in message_lower or "repair" in message_lower:
-                next_progress = 95
-
-            else:
-                # Move forward slowly instead of jumping back to 10
-                next_progress = progress_state["value"] + 3
-
-            # Never allow progress to move backward
-            next_progress = max(progress_state["value"], next_progress)
-
-            # Keep below 100 until the pipeline is actually done
-            next_progress = min(next_progress, 95)
-
-            progress_state["value"] = next_progress
-
             status_box.info(message)
-            progress_bar.progress(next_progress)
-
-            
+            progress_bar.progress(progress_steps.get(message, 10))
 
         try:
             result = run_async(
-                run_research_pipeline,
-                query=query,
-                session_id=st.session_state.session_id,
-                progress_callback=update_progress
-                
+                run_research_pipeline(
+                    query=query,
+                    session_id=st.session_state.session_id,
+                    progress_callback=update_progress
+                )
             )
 
             progress_bar.progress(100)

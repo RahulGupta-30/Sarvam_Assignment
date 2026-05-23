@@ -14,22 +14,36 @@ import agent
 import session_store
 import rolling_summary
 import query_planner
+from concurrent.futures import ThreadPoolExecutor
 
 
 load_dotenv()
 session_store.init_db()
 
 
-def run_async(coro):
+def run_async(async_fn, *args, **kwargs):
     """
-    Helper to run async code from Streamlit button clicks.
+    Run an async function from Streamlit sync code.
+
+    Important:
+    Pass the async function itself, not an already-created coroutine.
+    This avoids reusing an already-awaited coroutine.
     """
+
     try:
-        return asyncio.run(coro)
+        asyncio.get_running_loop()
     except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(coro)
+        # Normal Streamlit case: no event loop is already running here
+        return asyncio.run(async_fn(*args, **kwargs))
+
+    # Fallback case: if an event loop is already running,
+    # run the async function in a separate thread with its own loop.
+    def runner():
+        return asyncio.run(async_fn(*args, **kwargs))
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(runner)
+        return future.result()
 
 
 # -------------------------------

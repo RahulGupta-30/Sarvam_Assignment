@@ -14,47 +14,32 @@ import agent
 import session_store
 import rolling_summary
 import query_planner
-import nest_asyncio
+
 
 load_dotenv()
 session_store.init_db()
 
 
-def run_async(coro):
-    """
-    Helper to run async code from Streamlit's synchronous context.
+from concurrent.futures import ThreadPoolExecutor
 
-    Streamlit runs in a thread that may already have a running event loop
-    (especially on newer versions). asyncio.run() always creates a fresh loop
-    and is safe to call with a fresh coroutine, but will fail if a loop is
-    already running in the same thread.
 
-    The correct fix is to use nest_asyncio (which patches asyncio to allow
-    nested loops), or to detect the running loop and schedule onto it.
-    We use the nest_asyncio approach as it is the most reliable for Streamlit.
+def run_async(async_fn, *args, **kwargs):
     """
-    try:
-        import nest_asyncio
-        nest_asyncio.apply()
-    except ImportError:
-        pass  # If not installed, fall through to the loop approach below
+    Run an async function from Streamlit sync code.
+    Pass the async function itself, not a coroutine object.
+    """
 
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                future = pool.submit(asyncio.run, coro)
-                return future.result()
-        return loop.run_until_complete(coro)
+        asyncio.get_running_loop()
     except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            return loop.run_until_complete(coro)
-        finally:
-            loop.close()
+        return asyncio.run(async_fn(*args, **kwargs))
 
+    def runner():
+        return asyncio.run(async_fn(*args, **kwargs))
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(runner)
+        return future.result()
 
 
 # -------------------------------
@@ -299,11 +284,11 @@ if query:
 
         try:
             result = run_async(
-                run_research_pipeline(
+                run_research_pipeline,
                     query=query,
                     session_id=st.session_state.session_id,
                     progress_callback=update_progress
-                )
+                
             )
 
             progress_bar.progress(100)

@@ -317,11 +317,11 @@ if query:
 
         try:
             result = run_async(
-                run_research_pipeline(
-                    query=query,
-                    session_id=st.session_state.session_id,
-                    progress_callback=update_progress
-                )
+                run_research_pipeline,
+                query=query,
+                session_id=st.session_state.session_id,
+                progress_callback=update_progress
+                
             )
 
             progress_bar.progress(100)

@@ -14,7 +14,7 @@ import agent
 import session_store
 import rolling_summary
 import query_planner
-
+import nest_asyncio
 
 load_dotenv()
 session_store.init_db()
@@ -22,14 +22,39 @@ session_store.init_db()
 
 def run_async(coro):
     """
-    Helper to run async code from Streamlit button clicks.
+    Helper to run async code from Streamlit's synchronous context.
+
+    Streamlit runs in a thread that may already have a running event loop
+    (especially on newer versions). asyncio.run() always creates a fresh loop
+    and is safe to call with a fresh coroutine, but will fail if a loop is
+    already running in the same thread.
+
+    The correct fix is to use nest_asyncio (which patches asyncio to allow
+    nested loops), or to detect the running loop and schedule onto it.
+    We use the nest_asyncio approach as it is the most reliable for Streamlit.
     """
     try:
-        return asyncio.run(coro)
+        import nest_asyncio
+        nest_asyncio.apply()
+    except ImportError:
+        pass  # If not installed, fall through to the loop approach below
+
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(asyncio.run, coro)
+                return future.result()
+        return loop.run_until_complete(coro)
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(coro)
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            loop.close()
+
 
 
 # -------------------------------

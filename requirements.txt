@@ -4,3 +4,4 @@ google-genai
 tavily-python
 openai
 requests
+nest_asyncio
